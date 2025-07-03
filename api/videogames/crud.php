@@ -211,7 +211,6 @@ function handlePut($pdo)
 
         if (file_exists($oldCover)) {
             unlink($oldCover);
-            return;
         }
     }
 
@@ -219,7 +218,17 @@ function handlePut($pdo)
 
     // Salvo nel Database
 
+
+    $stmtId = $pdo->prepare("SELECT * FROM videogames WHERE id = ?");
+    $stmtId->execute([$id]);
+    $videogameId = $stmtId->fetchColumn();
+    if (!$videogameId) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Videogioco non trovato']);
+        return;
+    }
     try {
+
         $stmt = $pdo->prepare("UPDATE videogames 
     SET pegi_id = ?, 
     name = ?, 
@@ -236,6 +245,7 @@ function handlePut($pdo)
         http_response_code(500);
         echo json_encode(['error' => $e->getMessage()]);
     }
+
 
     //  PIVOT
 
@@ -305,8 +315,30 @@ function handlePut($pdo)
             }
 
             $screenshotSlug = generateUniqueSlug($pdo, 'screenshots', 'slug', $screenshots["name"][$key]);
+
+            // Recupero gli screenshots attuali dal DB
+
+            try {
+                $stmt = $pdo->prepare("SELECT url FROM screenshots WHERE videogame_id = ?");
+                $stmt->execute([$id]);
+                $oldScreenshots = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+                echo JSON_ENCODE($oldScreenshots);
+
+                foreach ($oldScreenshots as $oldScreenshot) {
+                    if (file_exists($oldScreenshot)) {
+                        unlink($oldScreenshot);
+                    }
+                }
+            } catch (PDOException $e) {
+                http_response_code(400);
+                echo json_encode(["error" => $e->getMessage()]);
+                return;
+            }
             $pdo->beginTransaction();
             try {
+
+
                 $stmtDelete = $pdo->prepare("DELETE FROM screenshots WHERE videogame_id = ?");
                 $stmtDelete->execute([$id]);
 
