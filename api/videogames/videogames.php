@@ -1,7 +1,7 @@
 <?php
 
 header('Content-Type: application/json');
-require_once './functions.php';
+require_once './crud.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
