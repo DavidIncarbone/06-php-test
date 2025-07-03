@@ -5,6 +5,15 @@ require_once './crud.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+// Se è POST con override nel body o header, sovrascrivi il metodo
+if ($method === 'POST') {
+    if (isset($_POST['_method'])) {
+        $method = strtoupper($_POST['_method']);
+    } elseif (isset($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE'])) {
+        $method = strtoupper($_SERVER['HTTP_X_HTTP_METHOD_OVERRIDE']);
+    }
+}
+
 switch ($method) {
     case 'GET':
         handleGet($pdo);
