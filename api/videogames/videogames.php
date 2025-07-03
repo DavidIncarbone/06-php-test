@@ -1,7 +1,10 @@
 <?php
 
 header('Content-Type: application/json');
-require_once './crud.php';
+require_once './crud/get_delete.php';
+require_once './crud/post.php';
+require_once './crud/put.php';
+
 
 $method = $_SERVER['REQUEST_METHOD'];
 

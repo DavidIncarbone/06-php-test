@@ -1,4 +1,5 @@
 <?php
+
 $host = 'localhost';
 $dbname = 'db_videogames';
 $user = 'root';
