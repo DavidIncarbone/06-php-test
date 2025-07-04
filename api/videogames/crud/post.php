@@ -1,53 +1,77 @@
 <?php
 
-require_once  '../../../config.php';
-require_once  '../../../functions.php';
+require_once  __DIR__ .  '../../config.php';
+require_once  __DIR__ .  '../../functions.php';
+require_once  __DIR__ .  '/../../../vendor/autoload.php';
+
+use \Respect\Validation\Validator as v;
+use \Respect\Validation\Exceptions\NestedValidationException;
+
+
+
 
 function handlePost($pdo)
 {
 
-    if (!isset($_POST['name']) || !isset($_POST['description'])) {
+    //     validatePostFields(['cover', 'name', 'pegi_id', 'price', 'year_of_publication', 'description', 'publisher', 'genre_ids[]']);
+
+
+    $validator = v::key('name', v::stringType()->notEmpty())->key('description', v::stringType()->notEmpty())->key('pegi_id', v::numericVal()->positive()->notEmpty())->key('price', v::numericVal()->positive()->notEmpty())->key('year_of_publication', v::numericVal()->positive()->between(1980, 2025)->notEmpty())->key('publisher', v::stringType()->notEmpty());
+
+    try {
+        $validator->assert($_POST);
+    } catch (NestedValidationException $e) {
         http_response_code(400);
-        echo json_encode(['error' => 'Dati incompleti']);
-        return;
-    }
-
-    $cover = $_FILES['cover'];
-    $uploadDir = __DIR__ . '/uploads/cover/';
-
-    if (!is_dir($uploadDir)) {
-        mkdir($uploadDir, 0755, true);
-    }
-
-    $filename = uniqid() . '_' . basename(str_replace(' ', '_', $cover['name']));
-    $targetPath = $uploadDir . $filename;
-    $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-    $mimeType = finfo_file($finfo, $cover['tmp_name']);
-    finfo_close($finfo);
-
-    if (!in_array($mimeType, $allowedMimeTypes)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Formato file non valido. Sono accettate solo immagini']);
-        return;
-    }
-
-    $maxSize = 5 * 1024 * 1024;
-
-    if ($cover['size'] > $maxSize) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Il file supera la dimensione massima di 5 MB']);
+        echo json_encode(['error' => $e->getMessages()]);
         return;
     }
 
 
-    if (move_uploaded_file($cover['tmp_name'], $targetPath)) {
-        echo json_encode(['message' => 'cover caricata', 'file' => 'uploads/cover/' . $filename]);
+
+    if (array_key_exists("cover", $_FILES)) {
+
+        $cover = $_FILES['cover'];
+        $uploadDir = __DIR__ . '/uploads/cover/';
+
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        $filename = uniqid() . '_' . basename(str_replace(' ', '_', $cover['name']));
+        $targetPath = $uploadDir . $filename;
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mimeType = finfo_file($finfo, $cover['tmp_name']);
+        finfo_close($finfo);
+
+        if (!in_array($mimeType, $allowedMimeTypes)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Formato file non valido. Sono accettate solo immagini']);
+            return;
+        }
+
+        $maxSize = 5 * 1024 * 1024;
+
+        if ($cover['size'] > $maxSize) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Il file supera la dimensione massima di 5 MB']);
+            return;
+        }
+
+
+        if (move_uploaded_file($cover['tmp_name'], $targetPath)) {
+            echo json_encode(['message' => 'cover caricata', 'file' => 'uploads/cover/' . $filename]);
+        } else {
+            http_response_code(500);
+            echo json_encode(['error' => 'Errore nel salvataggio del file']);
+            return;
+        }
     } else {
-        http_response_code(500);
-        echo json_encode(['error' => 'Errore nel salvataggio del file']);
+        http_response_code(400);
+        echo json_encode(['error' => 'Cover non presente']);
         return;
     }
+
 
     $slug = generateUniqueSlug($pdo, 'videogames', 'slug', $_POST["name"]);
 
