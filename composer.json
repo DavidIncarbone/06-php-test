@@ -1,5 +1,6 @@
 {
     "require": {
-        "respect/validation": "^2.4"
+        "respect/validation": "^2.4",
+        "vlucas/phpdotenv": "^5.6"
     }
 }
