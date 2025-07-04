@@ -2,6 +2,10 @@
 
 require_once  __DIR__ .  '../../config.php';
 require_once  __DIR__ .  '../../functions.php';
+require_once  __DIR__ .  '/../../../vendor/autoload.php';
+
+use \Respect\Validation\Validator as v;
+use \Respect\Validation\Exceptions\NestedValidationException;
 
 function handlePut($pdo)
 {
@@ -9,14 +13,26 @@ function handlePut($pdo)
 
     // Recupero la cover attuale dal DB
 
-    try {
+    echo json_encode($_POST);
 
+    try {
         $stmt = $pdo->prepare("SELECT cover FROM videogames WHERE id = ?");
         $stmt->execute([$id]);
         $oldCover = $stmt->fetchColumn();
     } catch (PDOException $e) {
         http_response_code(400);
         echo json_encode(["error" => $e->getMessage()]);
+        return;
+    }
+
+    // Validazione
+    $validator = v::key('name', v::stringType()->notEmpty())->key('description', v::stringType()->notEmpty())->key('pegi_id', v::numericVal()->positive()->notEmpty())->key('price', v::numericVal()->positive()->notEmpty())->key('year_of_publication', v::numericVal()->positive()->between(1980, 2025)->notEmpty())->key('publisher', v::stringType()->notEmpty())->key('genre_ids', v::arrayType()->each(v::numericVal()->notEmpty()));
+
+    try {
+        $validator->assert($_POST);
+    } catch (NestedValidationException $e) {
+        http_response_code(400);
+        echo json_encode(['error' => $e->getMessages()]);
         return;
     }
 

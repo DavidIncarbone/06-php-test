@@ -13,10 +13,10 @@ use \Respect\Validation\Exceptions\NestedValidationException;
 function handlePost($pdo)
 {
 
-    //     validatePostFields(['cover', 'name', 'pegi_id', 'price', 'year_of_publication', 'description', 'publisher', 'genre_ids[]']);
-
-
-    $validator = v::key('name', v::stringType()->notEmpty())->key('description', v::stringType()->notEmpty())->key('pegi_id', v::numericVal()->positive()->notEmpty())->key('price', v::numericVal()->positive()->notEmpty())->key('year_of_publication', v::numericVal()->positive()->between(1980, 2025)->notEmpty())->key('publisher', v::stringType()->notEmpty());
+    $validator = v::key('name', v::stringType()->notEmpty())->key('description', v::stringType()->notEmpty())->key('pegi_id', v::numericVal()->positive()->notEmpty())->key('price', v::numericVal()->positive()->notEmpty())->key('year_of_publication', v::numericVal()->positive()->between(1980, 2025)->notEmpty())->key('publisher', v::stringType()->notEmpty())->key(
+        'genre_ids',
+        v::arrayType()->each(v::numericVal()->notEmpty())
+    );
 
     try {
         $validator->assert($_POST);
@@ -25,8 +25,6 @@ function handlePost($pdo)
         echo json_encode(['error' => $e->getMessages()]);
         return;
     }
-
-
 
     if (array_key_exists("cover", $_FILES)) {
 
