@@ -72,10 +72,11 @@ function handlePost($pdo)
 
 
     $slug = generateUniqueSlug($pdo, 'videogames', 'slug', $_POST["name"]);
+    $dbCoverPath = 'http://localhost/boolean/06-php-test/api/videogames/crud/uploads/cover/' . $filename;
 
     try {
         $stmt = $pdo->prepare("INSERT INTO videogames (pegi_id, name, price, year_of_publication, cover, description, publisher, slug) VALUES (?,?,?,?,?,?,?,?)");
-        $stmt->execute([$_POST['pegi_id'], $_POST['name'], $_POST['price'], $_POST['year_of_publication'], $targetPath, $_POST['description'], $_POST['publisher'], $slug]);
+        $stmt->execute([$_POST['pegi_id'], $_POST['name'], $_POST['price'], $_POST['year_of_publication'], $dbCoverPath, $_POST['description'], $_POST['publisher'], $slug]);
         echo json_encode(['message' => 'Videogioco creato', 'id' => $pdo->lastInsertID()]);
     } catch (PDOException $e) {
         http_response_code(500);
